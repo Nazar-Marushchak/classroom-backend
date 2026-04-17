@@ -6,6 +6,8 @@ import cors from 'cors';
 import {toNodeHandler} from "better-auth/node";
 
 import subjectsRouter from './routes/subjects.js';
+import classesRouter from './routes/classes.js';
+import usersRouter from './routes/users.js';
 import securityMiddleware from './middleware/security.js';
 import {auth} from "./lib/auth.js";
 
@@ -29,6 +31,8 @@ app.use(express.json());
 app.use(securityMiddleware)
 
 app.use('/api/subjects', subjectsRouter);
+app.use('/api/classes', classesRouter);
+app.use('/api/users', usersRouter);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Hello from Express!' });
