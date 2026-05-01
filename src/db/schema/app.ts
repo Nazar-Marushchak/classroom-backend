@@ -6,6 +6,7 @@ import {
     pgTable,
     text,
     timestamp,
+    uniqueIndex,
     varchar,
 } from "drizzle-orm/pg-core";
 import {relations} from "drizzle-orm";
@@ -24,7 +25,9 @@ export const departments = pgTable('departments', {
     name: varchar('name', {length: 255}).notNull(),
     description: varchar('description', {length: 255}),
     ...timestamps
-})
+}, (table) => ({
+    codeUnique: uniqueIndex("departments_code_unique").on(table.code),
+}))
 
 export const subjects = pgTable('subjects', {
     id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
@@ -33,7 +36,9 @@ export const subjects = pgTable('subjects', {
     code: varchar('code', {length: 50}).notNull(),
     description: varchar('description', {length: 255}),
     ...timestamps
-})
+}, (table) => ({
+    codeUnique: uniqueIndex("subjects_code_unique").on(table.code),
+}))
 
 export const classes = pgTable('classes', {
     id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
@@ -62,7 +67,7 @@ export const enrollments = pgTable('enrollments', {
     (table) => ({
         studentIdIdx: index("enrollments_student_id_idx").on(table.studentId),
         classIdIdx: index("enrollments_class_id_idx").on(table.classId),
-        studentClassUnique: index("enrollments_student_class_unique").on(
+        studentClassUnique: uniqueIndex("enrollments_student_class_unique").on(
             table.studentId,
             table.classId
         ),

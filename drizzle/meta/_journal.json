@@ -15,6 +15,20 @@
       "when": 1775751100334,
       "tag": "0001_abandoned_wasp",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777558400040,
+      "tag": "0002_cool_zeigeist",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777566013144,
+      "tag": "0003_dusty_emma_frost",
+      "breakpoints": true
     }
   ]
 }

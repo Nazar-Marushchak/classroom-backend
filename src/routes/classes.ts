@@ -1,6 +1,6 @@
 import {and, desc, eq, getTableColumns, ilike, or, sql} from "drizzle-orm";
 import express from "express";
-import {classes, subjects, departments} from "../db/schema/app.js";
+import {classes, subjects, departments, enrollments} from "../db/schema/app.js";
 import {db} from "../db/index.js";
 import {user} from "../db/schema/auth.js";
 
@@ -114,6 +114,75 @@ router.get('/:id', async (req, res) => {
 
     res.status(200).json({data: classDetails});
 })
+
+// Get users (students) enrolled in a class
+router.get("/:id/users", async (req, res) => {
+    try {
+        const classId = Number(req.params.id);
+        const { role, page = "1", limit = "10" } = req.query;
+
+        if (!Number.isFinite(classId)) {
+            return res.status(400).json({ error: "Invalid class ID" });
+        }
+
+        const toPositiveInt = (value: unknown, fallback: number) => {
+            if (Array.isArray(value)) return fallback;
+            const n = Number.parseInt(String(value), 10);
+            return Number.isFinite(n) && n > 0 ? n : fallback;
+        };
+
+        const MAX_LIMIT = 100;
+        const currentPage = toPositiveInt(page, 1);
+        const limitPerPage = Math.min(MAX_LIMIT, toPositiveInt(limit, 10));
+        const offset = (currentPage - 1) * limitPerPage;
+
+        const filterConditions = [eq(enrollments.classId, classId)];
+
+        if (role) {
+            filterConditions.push(eq(user.role, role as any));
+        }
+
+        const whereClause = and(...filterConditions);
+
+        const countResult = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(enrollments)
+            .innerJoin(user, eq(enrollments.studentId, user.id))
+            .where(whereClause);
+
+        const totalCount = countResult[0]?.count ?? 0;
+
+        const enrolledUsers = await db
+            .select({
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                image: user.image,
+                emailVerified: user.emailVerified,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt
+            })
+            .from(enrollments)
+            .innerJoin(user, eq(enrollments.studentId, user.id))
+            .where(whereClause)
+            .limit(limitPerPage)
+            .offset(offset);
+
+        res.status(200).json({
+            data: enrolledUsers,
+            pagination: {
+                page: currentPage,
+                limit: limitPerPage,
+                total: totalCount,
+                totalPages: Math.ceil(totalCount / limitPerPage),
+            },
+        });
+    } catch (e) {
+        console.error(`GET /classes/:id/users error: ${e}`);
+        res.status(500).json({ error: "Failed to get enrolled users" });
+    }
+});
 
 // Create a new class
 router.post("/", async (req, res) => {
